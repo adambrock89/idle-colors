@@ -596,8 +596,6 @@ func set_probability_modifier(modifier: float) -> void:
 	probability_modifier = modifier
 
 func _roll_random_tier() -> int:
-	print("Tier 2 odds: %s" % str(tier_probability_base * probability_modifier))
-	print("Tier 2 odds: %s" % str(tier_probability_base/10 * probability_modifier))
 	var roll = randf()
 	if max_tier <= 1:
 		return 1

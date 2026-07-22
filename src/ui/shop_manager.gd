@@ -202,10 +202,8 @@ func refresh_list() -> void:
 		#Check prerequisites
 		var prereq_list = this_upgrade.get("prereq",{})
 		var meets_prereq = true
-		if prereq_list.size() > 0:
-			print(prereq_list)
+
 		for prereq in prereq_list:
-			print(prereq)
 			var current_level: int = int(current_level.get(prereq,0))
 			var required_level: int = int(prereq_list[prereq])
 			if current_level < required_level:
@@ -275,6 +273,10 @@ func _on_purchase_requested(series_id: String, requested_level: int) -> void:
 		return
 
 	var costs := series.get("cost", {}).duplicate() as Dictionary
+	var cost_multiplier := series.get("cost_multiplier",1.0) as float
+	
+	for cost in costs:
+		costs.set(cost,costs.get(cost) * pow(cost_multiplier,requested_level-1))
 
 	if scoreboard == null:
 		push_warning("No scoreboard found; cannot process purchase")
