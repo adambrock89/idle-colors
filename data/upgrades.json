@@ -93,7 +93,7 @@
 			"multiplier":  1.05
 		},
 		"cost": {
-			"red":  500
+			"red":  350
 		},
 		"cost_multiplier": 1.45
 	},
@@ -104,10 +104,10 @@
 		"max_level": 25,
 		"effect":  {
 			"type":  "mult",
-			"multiplier":  1.05
+			"multiplier":  1.1
 		},
 		"cost": {
-			"yellow":  500
+			"yellow":  350
 		},
 		"cost_multiplier": 1.45
 	},
@@ -115,15 +115,15 @@
 		"id":  "hatch_width",
 		"name":  "Hatch Width",
 		"description":  "Increases the width of the hatches",
-		"max_level": 25,
+		"max_level": 15,
 		"effect":  {
 			"type":  "mult",
-			"multiplier":  1.05
+			"multiplier":  1.15
 		},
 		"cost": {
-			"blue":  500
+			"blue":  350
 		},
-		"cost_multiplier": 1.45
+		"cost_multiplier": 6.25
 	},
 	{
 		"id":  "tier_two_unlock",
@@ -173,63 +173,43 @@
 		"id":  "bucket_object",
 		"name":  "Bucket",
 		"description":  "A bucket that can be used to organize",
-		"max_level": 1,
+		"max_level": 6,
 		"effect":  {
-			"type":  "mult",
+			"type":  "set",
 			"multiplier": 1
 		},
 		"cost": {
 			"orange":  10
 		},
-		"cost_multiplier":1.3
+		"cost_multiplier":15
 	},
 	{
 		"id":  "plank_object",
 		"name":  "Plank",
 		"description":  "A plank that you can be moved by clicking it, and rotated using the scroll wheel.",
-		"max_level": 1,
+		"max_level": 5,
 		"effect":  {
-			"type":  "mult",
+			"type":  "set",
 			"multiplier": 1
 		},
 		"cost": {
 			"orange":  25
 		},
-		"cost_multiplier":1
-	},
-	{
-		"id":  "plank_length",
-		"name":  "Plank Length",
-		"description":  "Extends the length of the plank",
-		"max_level": 5,
-		"effect":  {
-			"type":  "mult",
-			"multiplier": 1.15
-		},
-		"cost": {
-			"orange":  35
-		},
-		"cost_multiplier":1.3,
-		"prereq": {
-			"plank_object": 1
-		}
+		"cost_multiplier":15
 	},
 	{
 		"id":  "plank_bounce",
 		"name":  "Plank Bounce",
 		"description":  "Adds bounce to your plank",
-		"max_level": 5,
+		"max_level": 10,
 		"effect":  {
 			"type":  "mult",
-			"multiplier": 1.15
+			"multiplier": 1.1
 		},
 		"cost": {
-			"orange":  175
+			"orange":  18000
 		},
-		"cost_multiplier":1.3,
-		"prereq": {
-			"plank_length": 5
-		}
+		"cost_multiplier":3.5
 	},
 	{
 		"id":  "quantity_bonus",
@@ -238,12 +218,12 @@
 		"max_level": 10,
 		"effect":  {
 			"type":  "mult",
-			"multiplier": 1.15
+			"multiplier": 1.05
 		},
 		"cost": {
 			"green": 10
 		},
-		"cost_multiplier":1.3
+		"cost_multiplier":6.25
 	},
 	{
 		"id":  "monochrome_bonus",
@@ -257,7 +237,7 @@
 		"cost": {
 			"green": 10
 		},
-		"cost_multiplier":1.3
+		"cost_multiplier":6.25
 	},
 	{
 		"id":  "border_quality_unlock",

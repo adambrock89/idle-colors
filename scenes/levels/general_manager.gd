@@ -1,6 +1,10 @@
 extends Node2D
 
 var stone_shader := preload("res://assets/shaders/stone.gdshader") as Shader
+var maya_index = 0
+var maya_array = ["M","A","Y","A"]
+var password_index = 0
+var password_array = ["T","E","K","K","E","N"]
 
 func _ready():
 	var platform := %Platform
@@ -9,6 +13,28 @@ func _ready():
 		platform.start()
 		
 
+func _unhandled_input(event):
+	if event is InputEventKey and event.pressed and event.keycode >= KEY_A and event.keycode <= KEY_Z:
+		var letter = char(event.keycode)
+
+		if letter == maya_array[maya_index]:
+			maya_index += 1
+			
+			if maya_index == maya_array.size():
+				%Scoreboard.maya_love()
+				maya_index = 0
+		else:
+			maya_index = 0
+			
+		if letter == password_array[password_index]:
+			password_index += 1
+			
+			if password_index == password_array.size():
+				%Scoreboard.happy_anniversary()
+				password_index = 0
+		else:
+			password_index = 0
+		
 func generate_level_boundaries(hatch_left_edge: Vector2, hatch_right_edge: Vector2, hatch_top_edge: Vector2) -> void:
 	var viewport := get_viewport().get_visible_rect()
 	var screen_top := viewport.position.y

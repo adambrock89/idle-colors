@@ -9,6 +9,8 @@ var randomize_tier: bool = false
 var tier_probability_base: float = 0.2
 var probability_modifier: float = 1.0
 
+var metal_types_enabled: bool = false
+
 var base_pull_strength: float = 5.0
 var pull_strength_multiplier: float = 1.0
 var grab_radius: float = 0.0
@@ -25,10 +27,10 @@ var METAL_TYPES := {
 }
 
 var METAL_WEIGHTS := {
-	"copper": 1.0,
-	"silver": 0.0,
-	"gold": 0.0,
-	"crystal": 0.0
+	"copper": 1000.0,
+	"silver": 100.0,
+	"gold": 10.0,
+	"crystal": 1.0
 }
 
 
@@ -295,6 +297,7 @@ func get_poly_points(color: ColorProfile.ColorName, tier: int, first_strength: V
 	return scaled_points
 
 func build_nodes(parent_container: FragmentContainer, points: PackedVector2Array, color_name):
+
 	if points.size() < 3:
 		return
 
@@ -309,8 +312,7 @@ func build_nodes(parent_container: FragmentContainer, points: PackedVector2Array
 		
 
 	var container_center := parent_container.global_position
-	var border_scale := 1.15
-	var push_offset := compute_push_out_offset(centroid, container_center, border_scale)
+	var push_offset := compute_push_out_offset(centroid, container_center)
 	centroid += push_offset
 
 	# Compute bounding box
@@ -381,11 +383,12 @@ func build_nodes(parent_container: FragmentContainer, points: PackedVector2Array
 
 	create_border(centered_points, inner)
 
-func compute_push_out_offset(fragment_centroid: Vector2, container_center: Vector2, border_scale: float) -> Vector2:
+func compute_push_out_offset(fragment_centroid: Vector2, container_center: Vector2) -> Vector2:
 	var outward_dir := (fragment_centroid - container_center).normalized()
 	var dist := (fragment_centroid - container_center).length()
-	var border_growth := border_scale - 1.0
+	var border_growth := .10
 	var push_distance := dist * border_growth
+
 	return outward_dir * push_distance
 
 func set_generation_enabled(enabled: bool) -> void:
@@ -425,7 +428,9 @@ func create_border(centered_points: PackedVector2Array, inner: Node2D) -> MeshIn
 
 	var mat := ShaderMaterial.new()
 	mat.shader = preload("res://assets/shaders/solder.gdshader")
-	mat.set("shader_parameter/metal_type", get_random_metal_type())
+	var metal_type: int = get_random_metal_type()
+	mat.set("shader_parameter/metal_type", metal_type)
+
 	mat.set("shader_parameter/bevel_mode", 0)
 	mat.set("shader_parameter/motion_factor", 0.0)
 	mat.set("shader_parameter/global_rotation", global_transform.get_rotation())
@@ -535,6 +540,9 @@ func create_border_mesh_from_polygon(points: PackedVector2Array, thickness: floa
 	return mi
 
 func get_random_metal_type() -> int:
+	if(metal_types_enabled == false):
+		return METAL_TYPES["copper"]
+		
 	var entries := []
 	for metal in METAL_WEIGHTS.keys():
 		if METAL_TYPES.has(metal):
@@ -634,6 +642,9 @@ func set_metal_weights(weights: Dictionary) -> void:
 		if METAL_WEIGHTS.has(metal_name):
 			METAL_WEIGHTS[metal_name] = max(0.0, float(weights[key]))
 
+func set_metal_types_enabled(is_enabled: bool):
+	metal_types_enabled = is_enabled
+	
 class GrabRadiusIndicator:
 	extends Node2D
 

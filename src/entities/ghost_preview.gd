@@ -3,7 +3,7 @@ class_name GhostPreview
 
 var source_node: StaticBody2D
 var sprite: Node2D
-var collision_polygon: CollisionPolygon2D
+var collision_node: Node
 
 var grab_offset := Vector2.ZERO
 var grab_offset_local := Vector2.ZERO
@@ -18,10 +18,10 @@ var initialized := false
 func _ready():
 	# Duplicate visuals + polygon
 	for child in source_node.get_children():
-		if child is CollisionPolygon2D:
-			collision_polygon = child.duplicate()
-			collision_polygon.visible = false
-			add_child(collision_polygon)
+		if child is CollisionPolygon2D or child is CollisionShape2D:
+			collision_node = child.duplicate()
+			collision_node.visible = false
+			add_child(collision_node)
 		elif child is Node2D and not (child is CollisionPolygon2D or child is CollisionShape2D):
 			sprite = child.duplicate()
 			sprite.visible = false
@@ -48,8 +48,9 @@ func _input(event: InputEvent):
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
 			current_rotation_degrees -= rotation_step_degrees
 		elif event.button_index == MOUSE_BUTTON_RIGHT:
-			source_node.set_deferred("is_being_placed",false)
-			queue_free()
+			if(!source_node.just_purchased):
+				source_node.set_deferred("is_being_placed",false)
+				queue_free()
 
 
 func _physics_process(_delta):
@@ -68,7 +69,7 @@ func _physics_process(_delta):
 
 	if not initialized:
 		sprite.visible = true
-		collision_polygon.visible = true
+		collision_node.visible = true
 		initialized = true
 		
 	# Tint
@@ -82,6 +83,7 @@ func _place_real_object():
 	source_node.global_transform = global_transform
 	
 	source_node.set_deferred("is_being_placed",false)
+	source_node.set_deferred("just_purchased",false)
 	
 	queue_free()
 
@@ -89,30 +91,41 @@ func _place_real_object():
 func _placement_is_valid() -> bool:
 	var space := get_world_2d().direct_space_state
 
-	var poly := collision_polygon.polygon
-	if poly.size() < 3:
-		return true
-
-	var concave := ConcavePolygonShape2D.new()
-	concave.segments = _polygon_to_segments(poly)
-
-	var full_xform := global_transform * collision_polygon.transform
-
 	var params := PhysicsShapeQueryParameters2D.new()
-	params.shape = concave
-	params.transform = full_xform
 	params.collide_with_bodies = true
 	params.collide_with_areas = false
 	params.collision_mask = source_node.collision_layer
+
+	var shape: Shape2D
+	var xform: Transform2D
+
+	if collision_node is Polygon2D and collision_node.polygon.size() >= 3:
+		var poly = collision_node.polygon
+		var concave := ConcavePolygonShape2D.new()
+		concave.segments = _polygon_to_segments(poly)
+
+		shape = concave
+		xform = global_transform * collision_node.transform
+
+	elif collision_node is CollisionShape2D and collision_node.shape:
+		shape = collision_node.shape
+		xform = global_transform * collision_node.transform
+
+	else:
+		return true
+
+	params.shape = shape
+	params.transform = xform
 
 	var results := space.intersect_shape(params, 32)
 
 	for hit in results:
 		if hit.collider == source_node:
-			continue  # ignore self
+			continue
 		return false
 
 	return true
+
 
 
 func _polygon_to_segments(poly: PackedVector2Array) -> PackedVector2Array:

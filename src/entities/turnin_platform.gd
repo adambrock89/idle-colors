@@ -8,6 +8,7 @@ var procedural_sfx_script: Script = load(PROCEDURAL_SFX_PATH) as Script
 var platform_width := 120.0
 var hatch_height := 5.0
 
+var base_hatch_speed := 3.0
 var animating := false
 
 var top_left_hatch: Node2D
@@ -335,6 +336,8 @@ func is_button_pressed() -> bool:
 
 
 func toggle_all_hatches() -> void:
+	var hatch_toggle_duration = base_hatch_speed / 6
+	var hatch_wait_time = base_hatch_speed / hatch_speed_multiplier
 	if animating:
 		return
 	animating = true
@@ -345,7 +348,7 @@ func toggle_all_hatches() -> void:
 		[true, false],
 		[false, false],
 		[base_top_left_global, base_top_right_global],
-		0.5
+		hatch_toggle_duration
 	)
 
 	_play_hatch_group_sfx([bottom_left_hatch, bottom_right_hatch], true)
@@ -354,11 +357,11 @@ func toggle_all_hatches() -> void:
 		[true, false],
 		[true, true],
 		[base_bottom_left_global, base_bottom_right_global],
-		0.5
+		hatch_toggle_duration
 	)
 
 	scoring_zone.monitoring = true
-	await get_tree().create_timer(2.0 / max(hatch_speed_multiplier, 0.1)).timeout
+	await get_tree().create_timer(hatch_wait_time).timeout
 
 	_play_hatch_group_sfx([bottom_left_hatch, bottom_right_hatch], false)
 	await tween_hatches_parallel(
@@ -366,7 +369,7 @@ func toggle_all_hatches() -> void:
 		[true, false],
 		[false, false],
 		[base_bottom_left_global, base_bottom_right_global],
-		0.5
+		hatch_toggle_duration
 	)
 
 	scoring_zone.monitoring = false
@@ -378,10 +381,10 @@ func toggle_all_hatches() -> void:
 		[true, false],
 		[true, true],
 		[base_top_left_global, base_top_right_global],
-		0.5
+		hatch_toggle_duration
 	)
 
-	await get_tree().create_timer(2.0 / max(hatch_speed_multiplier, 0.1)).timeout
+	await get_tree().create_timer(hatch_wait_time).timeout
 	animating = false
 
 

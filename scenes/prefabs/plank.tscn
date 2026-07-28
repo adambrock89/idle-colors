@@ -1,0 +1,25 @@
+[gd_scene load_steps=5 format=3 uid="uid://bcwrs2omiht6q"]
+
+[ext_resource type="Script" uid="uid://bnh7n0big2lm6" path="res://scenes/prefabs/plank.gd" id="1_m44vi"]
+
+[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_7051s"]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_m44vi"]
+radius = 20.0
+height = 300.0
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_b1jq5"]
+radius = 20.0
+height = 300.0
+
+[node name="Bumper" type="StaticBody2D"]
+physics_material_override = SubResource("PhysicsMaterial_7051s")
+script = ExtResource("1_m44vi")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+rotation = 1.5708
+shape = SubResource("CapsuleShape2D_m44vi")
+
+[node name="MeshInstance2D" type="MeshInstance2D" parent="."]
+rotation = 1.5708
+mesh = SubResource("CapsuleMesh_b1jq5")
