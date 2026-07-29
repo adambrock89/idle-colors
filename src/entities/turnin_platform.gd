@@ -32,6 +32,7 @@ var scoring_zone: Area2D
 var hatch_speed_multiplier: float = 1.0
 var hatch_width_multiplier: float = 1.0
 
+var circle_trigger 
 
 func start() -> void:
 	build_button()
@@ -122,6 +123,24 @@ func build_button():
 	detector.position = Vector2.ZERO
 	detector.monitoring = true
 	detector.monitorable = true
+	
+	#Circle Button
+	circle_trigger = load("res://src/entities/circle_trigger.gd").new()
+	circle_trigger.custom_minimum_size = Vector2(20, 20)
+	circle_trigger.z_index = 9
+	button.add_child(circle_trigger)
+
+	button.ready.connect(func():
+		circle_trigger.position = Vector2(
+			(button.size.x - circle_trigger.size.x) / 2,
+			button.size.y + 10
+		)
+	)
+
+	# Make circle behave like the button
+	circle_trigger.pressed.connect(func():
+		toggle_all_hatches()
+	)
 
 
 func _build_hatch_polygon(is_left: bool) -> PackedVector2Array:
@@ -341,6 +360,7 @@ func toggle_all_hatches() -> void:
 	if animating:
 		return
 	animating = true
+	circle_trigger.is_animating = animating
 
 	_play_hatch_group_sfx([top_left_hatch, top_right_hatch], false)
 	await tween_hatches_parallel(
@@ -386,6 +406,7 @@ func toggle_all_hatches() -> void:
 
 	await get_tree().create_timer(hatch_wait_time).timeout
 	animating = false
+	circle_trigger.is_animating = animating
 
 
 func _play_hatch_group_sfx(hatches: Array, opening: bool) -> void:

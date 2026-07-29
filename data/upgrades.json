@@ -51,7 +51,7 @@
 			"multiplier":  1.05
 		},
 		"cost": {
-			"red":  50
+			"red":  15
 		},
 		"cost_multiplier": 2.5
 	},
@@ -65,7 +65,7 @@
 			"multiplier":  1.05
 		},
 		"cost": {
-			"yellow":  50
+			"yellow":  15
 		},
 		"cost_multiplier": 2.5
 	},
@@ -79,7 +79,7 @@
 			"multiplier":  1.05
 		},
 		"cost": {
-			"blue":  50
+			"blue":  15
 		},
 		"cost_multiplier": 2.5
 	},
@@ -93,7 +93,7 @@
 			"multiplier":  1.05
 		},
 		"cost": {
-			"red":  350
+			"red":  35
 		},
 		"cost_multiplier": 1.45
 	},
@@ -107,7 +107,7 @@
 			"multiplier":  1.1
 		},
 		"cost": {
-			"yellow":  350
+			"yellow":  35
 		},
 		"cost_multiplier": 1.45
 	},
@@ -121,7 +121,7 @@
 			"multiplier":  1.15
 		},
 		"cost": {
-			"blue":  350
+			"blue":  35
 		},
 		"cost_multiplier": 6.25
 	},

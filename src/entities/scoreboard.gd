@@ -5,8 +5,6 @@ signal scores_changed
 
 const AREA_SCORE_REFERENCE_MASS: float = 72.0
 const AREA_SCORE_REFERENCE_VALUE: float = 1.0
-const AREA_SCORE_TARGET_MASS: float = 181.0
-const AREA_SCORE_TARGET_VALUE: float = 3.0
 const AREA_SCORE_EXPONENT: float = 1.5
 const PANEL_WIDTH: float = 465.0
 const PANEL_SIDE_MARGIN: float = 12.0
