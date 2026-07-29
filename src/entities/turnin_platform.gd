@@ -8,6 +8,7 @@ var procedural_sfx_script: Script = load(PROCEDURAL_SFX_PATH) as Script
 var platform_width := 120.0
 var hatch_height := 5.0
 
+var base_hatch_speed := 3.0
 var animating := false
 
 var top_left_hatch: Node2D
@@ -31,6 +32,7 @@ var scoring_zone: Area2D
 var hatch_speed_multiplier: float = 1.0
 var hatch_width_multiplier: float = 1.0
 
+var circle_trigger 
 
 func start() -> void:
 	build_button()
@@ -69,7 +71,7 @@ func build_button():
 	button_base.z_index = 1
 	add_child(button_base)
 
-	var base_width := 12.0
+	var base_width := 24.0
 	var base_height := 1.5
 	var button_base_col := CollisionPolygon2D.new()
 	var button_base_vis := Polygon2D.new()
@@ -82,7 +84,7 @@ func build_button():
 		Vector2(0, -base_height)
 	])
 	button_base_vis.polygon = button_base_col.polygon
-	button_base_vis.color = Color8(200, 200, 200)
+	button_base_vis.color = ColorProfile.get_color_code_of_color(ColorProfile.ColorName.YELLOW)
 
 	# BUTTON SHAFT
 	var button := AnimatableBody2D.new()
@@ -90,7 +92,7 @@ func build_button():
 	button.z_index = 0
 	add_child(button)
 
-	var shaft_width := 8.0
+	var shaft_width := 20.0
 	var shaft_height := base_height + 1.5
 	var button_col := CollisionPolygon2D.new()
 	var button_vis := Polygon2D.new()
@@ -103,7 +105,7 @@ func build_button():
 		Vector2(0, -shaft_height)
 	])
 	button_vis.polygon = button_col.polygon
-	button_vis.color = Color8(150, 150, 150)
+	button_vis.color = ColorProfile.get_color_code_of_color(ColorProfile.ColorName.ORANGE_YELLOW)
 
 	# PRESS DETECTOR
 	var detector := Area2D.new()
@@ -121,6 +123,24 @@ func build_button():
 	detector.position = Vector2.ZERO
 	detector.monitoring = true
 	detector.monitorable = true
+	
+	#Circle Button
+	circle_trigger = load("res://src/entities/circle_trigger.gd").new()
+	circle_trigger.custom_minimum_size = Vector2(20, 20)
+	circle_trigger.z_index = 9
+	button.add_child(circle_trigger)
+
+	button.ready.connect(func():
+		circle_trigger.position = Vector2(
+			(button.size.x - circle_trigger.size.x) / 2,
+			button.size.y + 10
+		)
+	)
+
+	# Make circle behave like the button
+	circle_trigger.pressed.connect(func():
+		toggle_all_hatches()
+	)
 
 
 func _build_hatch_polygon(is_left: bool) -> PackedVector2Array:
@@ -170,10 +190,7 @@ func build_hatch(is_left: bool, y_offset: float) -> Node2D:
 	col.polygon = _build_hatch_polygon(is_left)
 	vis.polygon = col.polygon
 
-	if is_left:
-		vis.color = Color.WHITE
-	else:
-		vis.color = Color8(255, 122, 122, 255)
+	vis.color = ColorProfile.get_color_code_of_color(ColorProfile.ColorName.BLUE)
 
 	hatch.position = Vector2(0, y_offset)
 	return hatch
@@ -267,14 +284,9 @@ func create_scoring_zone() -> Area2D:
 	zone.set_script(load("res://src/entities/score_zone.gd"))
 
 	var colpoly := CollisionPolygon2D.new()
+	colpoly.name = "CollisionPolygon2D"
 	colpoly.polygon = _build_rect_polygon(platform_width * hatch_width_multiplier, 40.0)
 	zone.add_child(colpoly)
-
-	var debug_poly := Polygon2D.new()
-	debug_poly.color = Color(1, 0, 0, 0.3)
-	debug_poly.z_index = 999
-	debug_poly.polygon = _build_rect_polygon(platform_width * hatch_width_multiplier, 40.0)
-	zone.add_child(debug_poly)
 
 	zone.position = Vector2(0, hatch_height_delta + 40.0)
 	add_child(zone)
@@ -343,9 +355,12 @@ func is_button_pressed() -> bool:
 
 
 func toggle_all_hatches() -> void:
+	var hatch_toggle_duration = base_hatch_speed / 6
+	var hatch_wait_time = base_hatch_speed / hatch_speed_multiplier
 	if animating:
 		return
 	animating = true
+	circle_trigger.is_animating = animating
 
 	_play_hatch_group_sfx([top_left_hatch, top_right_hatch], false)
 	await tween_hatches_parallel(
@@ -353,7 +368,7 @@ func toggle_all_hatches() -> void:
 		[true, false],
 		[false, false],
 		[base_top_left_global, base_top_right_global],
-		0.5
+		hatch_toggle_duration
 	)
 
 	_play_hatch_group_sfx([bottom_left_hatch, bottom_right_hatch], true)
@@ -362,11 +377,11 @@ func toggle_all_hatches() -> void:
 		[true, false],
 		[true, true],
 		[base_bottom_left_global, base_bottom_right_global],
-		0.5
+		hatch_toggle_duration
 	)
 
 	scoring_zone.monitoring = true
-	await get_tree().create_timer(2.0 / max(hatch_speed_multiplier, 0.1)).timeout
+	await get_tree().create_timer(hatch_wait_time).timeout
 
 	_play_hatch_group_sfx([bottom_left_hatch, bottom_right_hatch], false)
 	await tween_hatches_parallel(
@@ -374,7 +389,7 @@ func toggle_all_hatches() -> void:
 		[true, false],
 		[false, false],
 		[base_bottom_left_global, base_bottom_right_global],
-		0.5
+		hatch_toggle_duration
 	)
 
 	scoring_zone.monitoring = false
@@ -386,11 +401,12 @@ func toggle_all_hatches() -> void:
 		[true, false],
 		[true, true],
 		[base_top_left_global, base_top_right_global],
-		0.5
+		hatch_toggle_duration
 	)
 
-	await get_tree().create_timer(2.0 / max(hatch_speed_multiplier, 0.1)).timeout
+	await get_tree().create_timer(hatch_wait_time).timeout
 	animating = false
+	circle_trigger.is_animating = animating
 
 
 func _play_hatch_group_sfx(hatches: Array, opening: bool) -> void:

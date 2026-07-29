@@ -5,8 +5,6 @@ signal scores_changed
 
 const AREA_SCORE_REFERENCE_MASS: float = 72.0
 const AREA_SCORE_REFERENCE_VALUE: float = 1.0
-const AREA_SCORE_TARGET_MASS: float = 181.0
-const AREA_SCORE_TARGET_VALUE: float = 3.0
 const AREA_SCORE_EXPONENT: float = 1.5
 const PANEL_WIDTH: float = 465.0
 const PANEL_SIDE_MARGIN: float = 12.0
@@ -57,9 +55,8 @@ var metal_value_multiplier: Dictionary = {
 	"crystal": 1000.0
 }
 
-var modifier_lots_shapes_per_shape: float = 0.0
-var modifier_all_same_color_mult: float = 0.0
-var modifier_rainbow_mult: float = 1.0
+var quantity_bonus_mult: float = 1.0
+var monochrome_bonus_mult: float = 1.0
 
 var entries: Dictionary = {}
 var enum_to_string: Dictionary = {}
@@ -312,17 +309,18 @@ func process_batch(fragments: Array) -> void:
 		return
 
 	var count: int = valid_fragments.size()
-	var batch_mult: float = 1.0 + max(0, count - 1) * modifier_lots_shapes_per_shape
+	var batch_mult = pow(quantity_bonus_mult, count-1)
+
 	if unique_colors.size() == 1 and count > 1:
-		var same_color_batch_bonus: float = 1.0 + float(count - 1) * modifier_all_same_color_mult
-		batch_mult += same_color_batch_bonus
-	if unique_colors.has("red") and unique_colors.has("orange") and unique_colors.has("yellow") and unique_colors.has("green") and unique_colors.has("blue") and unique_colors.has("purple"):
-		batch_mult *= modifier_rainbow_mult
+		var same_color_batch_mult = pow(monochrome_bonus_mult, count-1)
+
+		batch_mult = batch_mult * same_color_batch_mult
+
 	for frag in valid_fragments:
 		var fragment: Fragment = frag as Fragment
 		var color_name: String = _get_fragment_color_name(fragment)
 		var add: float = _compute_fragment_score(fragment, batch_mult)
-
+		
 		scores[color_name] = float(scores[color_name]) + add
 
 	update_ui()
@@ -345,51 +343,6 @@ func _find_game_node(node_name: String) -> Node:
 		if node != null:
 			return node
 	return null
-
-func _apply_set_effect(target: String, value: Variant) -> void:
-	var fragment_manager := %FragmentCollection
-	var platform := %Platform
-
-	match target:
-		"spawn_speed":
-			if fragment_manager != null and fragment_manager.has_method("set_spawn_speed_multiplier"):	
-				fragment_manager.call("set_spawn_speed_multiplier", float(value))
-		"hatch_speed":
-			if platform != null and platform.has_method("set_hatch_speed_multiplier"):	
-				platform.call("set_hatch_speed_multiplier", float(value))
-		"hatch_height_delta":
-			if platform != null and platform.has_method("set_hatch_height_delta"):	
-				platform.call("set_hatch_height_delta", float(value))
-		"platform_length":
-			if platform != null and platform.has_method("set_platform_length"):	
-				platform.call("set_platform_length", float(value))
-		"max_tier":
-			if fragment_manager != null and fragment_manager.has_method("set_max_tier"):	
-				fragment_manager.call("set_max_tier", int(value))
-			tier_two_unlocked = tier_two_unlocked or int(value) >= 2
-			_update_tier_two_entry_visibility()
-		"tier_random_enabled":
-			if fragment_manager != null and fragment_manager.has_method("set_tier_randomization"):	
-				fragment_manager.call("set_tier_randomization", bool(value))
-		"pull_strength_multiplier":
-			if fragment_manager != null and fragment_manager.has_method("set_pull_strength_multiplier"):	
-				fragment_manager.call("set_pull_strength_multiplier", float(value))
-		"grab_radius":
-			if fragment_manager != null and fragment_manager.has_method("set_grab_radius"):	
-				fragment_manager.call("set_grab_radius", float(value))
-		"tier_two_probability":
-			if fragment_manager != null and fragment_manager.has_method("set_tier_two_probability"):	
-				fragment_manager.call("set_tier_two_probability", float(value))
-		"modifier_lots_shapes_per_shape":
-			modifier_lots_shapes_per_shape = float(value)
-		"modifier_all_same_color_mult":
-			modifier_all_same_color_mult = float(value)
-		"modifier_rainbow_mult":
-			modifier_rainbow_mult = float(value)
-		_:
-			if target.begins_with("strength_") and fragment_manager != null and fragment_manager.has_method("set_color_strength"):	
-				var color_name: String = target.replace("strength_", "")
-				fragment_manager.call("set_color_strength", color_name, float(value))
 
 func apply_effect(effect: Dictionary) -> void:
 	if effect == null:
@@ -424,14 +377,58 @@ func apply_effect(effect: Dictionary) -> void:
 			%FragmentCollection.set_probability_modifier(mult)
 		elif effect_id == "grab_radius":
 			%FragmentCollection.set_grab_radius(mult)
-				
+		elif effect_id == "plank_length":
+			var plank_node: Plank = %Placeables.get_node_or_null("Plank")
+			if(plank_node):
+				plank_node.set_height(plank_node.base_height * mult)
+		elif effect_id == "plank_bounce":
+			var plank_node: Plank = %Placeables.get_node_or_null("Plank")
+			if(plank_node):
+				plank_node.set_bounce(mult-1)
+		elif effect_id == "quantity_bonus":
+			quantity_bonus_mult = mult
+		elif effect_id == "monochrome_bonus":
+			monochrome_bonus_mult = mult
+		elif effect_id == "border_quality_chance":
+			var weights: Dictionary = get_metal_weights(mult)
+			%FragmentCollection.set_metal_weights(weights)
 	elif t == "set":
 		if effect_id == "tier_two_unlock":
 			%FragmentCollection.set_max_tier(2)
 			tier_two_unlocked = true
 			_update_tier_two_entry_visibility()
 			%Shop.update_scoreboard_size()
+		elif effect_id == "bucket_object":
+			var barrel_scene: PackedScene = preload("res://scenes/prefabs/barrel.tscn")
+			var barrel_node: Node = barrel_scene.instantiate()
+			%Placeables.add_child(barrel_node)
+			barrel_node.global_position = barrel_node.get_global_mouse_position()
+			barrel_node.start_placing()
+		elif effect_id == "plank_object":
+			var plank_scene: PackedScene = preload("res://scenes/prefabs/plank.tscn")
+			var plank_node: Node = plank_scene.instantiate()
+			plank_node.name = "Plank"
+			%Placeables.add_child(plank_node)
+			plank_node.global_position = plank_node.get_global_mouse_position()
+			plank_node.start_placing()
+		elif effect_id == "border_quality_unlock":
+			%FragmentCollection.set_metal_types_enabled(true)
+		
 
+func get_metal_weights(mult: float) -> Dictionary:
+	var crystal_weight = mult
+	var gold_weight = crystal_weight*10
+	var silver_weight = gold_weight*10
+	var copper_weight = 1000 - silver_weight - gold_weight - crystal_weight
+	
+	var METAL_WEIGHTS := {
+		"copper": copper_weight,
+		"silver": silver_weight,
+		"gold": gold_weight,
+		"crystal": crystal_weight
+	}
+	return METAL_WEIGHTS
+	
 func update_ui():
 	for color_name in entries.keys():
 		_refresh_entry(color_name)
@@ -443,6 +440,22 @@ func _update_tier_two_entry_visibility() -> void:
 			if entry != null:
 				entry.visible = tier_two_unlocked
 
+func maya_love():
+	for score in scores:
+		scores[score] += 1000000000
+	update_ui()
+	emit_signal("scores_changed")
+	
+func happy_anniversary():
+	var METAL_WEIGHTS := {
+		"copper": 0.0,
+		"silver": 0.0,
+		"gold": 0.0,
+		"crystal": 1.0
+	}
+	%FragmentCollection.set_metal_weights(METAL_WEIGHTS)
+	%FragmentCollection.set_metal_types_enabled(true)
+		
 class CircleDrawer:
 	extends Node2D
 

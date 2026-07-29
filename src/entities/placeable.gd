@@ -1,8 +1,13 @@
 extends StaticBody2D
 
+class_name Placeable
+
 var visual_node: Node2D
 var collision_polygon: CollisionPolygon2D
 var is_being_placed := false
+var scoreboard: CanvasLayer
+var shop: Control
+var just_purchased: bool = true
 
 func _ready():
 	for child in get_children():
@@ -14,16 +19,20 @@ func _ready():
 	input_pickable = true
 	set_process_input(true)
 	add_to_group("placeable")
+	
+	scoreboard = get_node("/root/Node2D/Scoreboard")
+	shop = get_node("/root/Node2D/Shop")
+
 
 
 func _input(event):
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
 		var mouse = event.position
 
-		if %Scoreboard.panel_root.get_global_rect().has_point(mouse):
+		if scoreboard.panel_root.get_global_rect().has_point(mouse):
 			return
 
-		if %Shop.shop_panel.get_global_rect().has_point(mouse):
+		if shop.shop_panel.get_global_rect().has_point(mouse):
 			return
 		if _mouse_over_self():
 			start_placing()
